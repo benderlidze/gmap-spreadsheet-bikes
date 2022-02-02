@@ -140,7 +140,7 @@
         const markersInPoly = [];
         let counts = {};
 
-        const mapCenter = {lat: 53.705163739607634, lng: -119.05963283887898}
+        const mapCenter = { lat: 53.705163739607634, lng: -119.05963283887898 }
         const mapZoom = 4
 
 
@@ -173,7 +173,7 @@
                             // markers can only be keyboard focusable when they have click listeners
                             // open info window when marker is clicked
                             marker.addListener("click", () => {
-                                infowindow.setContent(data.Address);
+                                infowindow.setContent(data['Store Name'] + "<br>" + data.Address);
                                 infowindow.open(map, marker);
                             });
 
