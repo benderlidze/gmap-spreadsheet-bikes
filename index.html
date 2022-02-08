@@ -41,7 +41,7 @@
     }
 
     #header {
-        height: 70px;
+        height: 50px;
         display: flex;
         flex-direction: row;
         align-content: center;
@@ -75,26 +75,40 @@
             left: 180px;
         }
     }
+
+    #header>div {
+        margin: 0 10px;
+    }
+
+    .inputs {
+        border: 1px solid gray;
+        background-color: white;
+        padding: 10px 20px;
+    }
 </style>
 
 <body>
 
     <div id="main-container">
         <div id="header">
-
-            Find Stores Near:
-            <button id="mylocation" class="">My Location</button>
-            <input id="searchTextField" class="" placeholder="Enter an address">
-            Search Radius
-            <select name="storelocator-search_radius" id="storelocator" aria-label="Search Radius">
-                <option value="5">5 km</option>
-                <option value="10">10 km</option>
-                <option value="25">25 km</option>
-                <option value="50">50 km</option>
-                <option value="100">100 km</option>
-                <option value="Unlimited" selected="">Unlimited</option>
-            </select>
-
+            <div>
+                Find Stores Near:
+                <button id="mylocation" style class="inputs">My Location</button>
+            </div>
+            <div>
+                <input id="searchTextField" style="width:300px;" class="inputs" placeholder="Enter an address">
+            </div>
+            <div>
+                Search Radius
+                <select name="storelocator-search_radius" id="storelocator" class="inputs" aria-label="Search Radius">
+                    <option value="5">5 km</option>
+                    <option value="10">10 km</option>
+                    <option value="25">25 km</option>
+                    <option value="50">50 km</option>
+                    <option value="100">100 km</option>
+                    <option value="Unlimited" selected="">Unlimited</option>
+                </select>
+            </div>
         </div>
         <div id="container">
             <div id="cards"></div>
@@ -318,7 +332,7 @@
                 const closest = points.sort((a, b) => {
                     return a.distance - b.distance
                 }).slice(0, number)
-
+ 
                 const infoContent = closest.map(row => {
                     text = `
                     <div class="item" data-address="${row['Address']}, ${row['City']}, ${row['zip']}">
@@ -329,7 +343,7 @@
                     `
                     return text;
                 })
-
+ 
                 info.style.display = 'block'
                 pannel.style.display = 'block';
                 info.innerHTML = `
