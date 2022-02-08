@@ -6,7 +6,7 @@
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
     <title>Google Maps Multiple Markers</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script> -->
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 </head>
 <style>
@@ -49,8 +49,15 @@
         justify-content: flex-start;
     }
 
+    #cards>div>.card {
+        border: 1px solid rgb(226, 226, 226);
+    }
+
+    #cards>div>.card:hover {
+        border: 1px solid rgb(141, 141, 141);
+    }
+
     .card {
-        border: 1px solid rgb(185, 185, 185);
         padding: 10px;
         margin: 10px;
         overflow: hidden;
@@ -59,6 +66,7 @@
     }
 
     .card>.item {
+        padding: 3px;
         pointer-events: none;
     }
 
@@ -74,12 +82,11 @@
     <div id="main-container">
         <div id="header">
 
-
             Find Stores Near:
-            <button class="">My Location</button>
+            <button id="mylocation" class="">My Location</button>
             <input id="searchTextField" class="" placeholder="Enter an address">
             Search Radius
-            <select name="storelocator-search_radius" id="storelocator-search-radius" aria-label="Search Radius">
+            <select name="storelocator-search_radius" id="storelocator" aria-label="Search Radius">
                 <option value="5">5 km</option>
                 <option value="10">10 km</option>
                 <option value="25">25 km</option>
@@ -95,16 +102,15 @@
         </div>
     </div>
 
-
-
     <script type="text/javascript">
-
         let circle;
         let directionsFrom = '';
         const mainData = [];
         let map;
         let setCenter = true;
         let currentPoly;
+        const mylocation = document.getElementById('mylocation');
+        const storelocator = document.getElementById('storelocator');
         const cardsDiv = document.getElementById('cards');
         const input = document.getElementById('searchTextField');
         const pannel = document.getElementById("pannel")
@@ -120,8 +126,8 @@
         let counts = {};
         const mapCenter = { lat: 35.04169358003858, lng: -97.26275783887898 }
         const mapZoom = 4
-
-
+        let markerCluster
+        let userLocation = {}
 
         function initMap() {
 
@@ -147,26 +153,36 @@
                                 position: { lat: +data.lat, lng: +data.lng },
                             });
                             marker.addListener("click", () => {
-                                infowindow.setContent(data['Store Name'] + "<br>" + data.Address);
+                                infowindow.setContent(createInfo(data));
                                 infowindow.open(map, marker);
                             });
                             cardsDiv.appendChild(createCard(data, marker))
+                            allMarkers.push(marker)
                             return marker;
                         });
                     // Add a marker clusterer to manage the markers.
-                    const markerCluster = new markerClusterer.MarkerClusterer({ map, markers });
+                    console.log('allMarkers', allMarkers);
+                    console.log('allMarkers', markers);
+                    markerCluster = new markerClusterer.MarkerClusterer({ map, markers });
                 })
 
-            function createCard(data, marker) {
 
-                const card = `
-                        <div class="item">${data['Company Name']}</div>
+            function createInfo(data) {
+                const div = `
+                    <div class="card">
+                        <div class="item"><b>${data['Company Name']}</b></div>
                         <div class="item">${data['Phone Number']}</div>
                         <div class="item">${data['Website']}</div>
                         <div class="item">${data['Address']}</div>
-                `
+                    </div>
+                `;
+                return div;
+            }
+
+            function createCard(data, marker) {
+
+                const card = createInfo(data)
                 const div = document.createElement("div")
-                div.className = "card"
                 div.innerHTML = card
                 div.addEventListener("click", () => {
                     console.log('123', marker);
@@ -177,10 +193,7 @@
                 return div
             }
 
-            const geocoder = new google.maps.Geocoder()
-
             function addMarker(pin, color) {
-
 
                 const icon = {
                     url: "icons/sun.png", // url
@@ -204,7 +217,7 @@
                         ${pin['Address']}, 
                         ${pin['City']}, 
                         ${pin['Panel Location']}</h3>
-                    </div>`
+                        </div>`
                     infowindow.setContent(content);
                     infowindow.open(map, marker);
                 });
@@ -216,12 +229,65 @@
                 componentRestrictions: { country: "us" }
             };
 
+            mylocation.addEventListener("click", () => {
+                getLocation()
+            })
+            storelocator.addEventListener("change", () => {
+
+                const radius = storelocator.value
+                console.log('raduis', radius);
+
+                if (radius.toLowerCase() === "unlimited") {
+                    allMarkers.forEach(marker => marker.setVisible(true))
+                    markerCluster.removeMarkers(allMarkers)
+                    markerCluster.addMarkers(allMarkers)
+                    return
+                };
+                if (Object.keys(userLocation).length === 0) return;
+
+                allMarkers.forEach(marker => {
+
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), userLocation) / 1000;
+                    if (radius >= +distance) {
+                        marker.setVisible(true)
+                        markerCluster.addMarker(marker)
+                        console.log('+distance', +distance, radius);
+                    } else {
+                        marker.setVisible(false)
+                        markerCluster.removeMarker(marker)
+                    }
+                })
+
+            })
+
+            function getLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition);
+                } else {
+                    alert("Geolocation is not supported by this browser.");
+                }
+            }
+
+            function showPosition(position) {
+                var lat = position.coords.latitude;
+                var lng = position.coords.longitude;
+
+                map.setCenter(new google.maps.LatLng(lat, lng));
+                map.setZoom(14);
+
+                userLocation = new google.maps.LatLng(lat, lng)
+            }
+
+            const geocoder = new google.maps.Geocoder()
             const autocomplete = new google.maps.places.Autocomplete(input, options);
             google.maps.event.addListener(autocomplete, 'place_changed', function (e) {
                 var place = autocomplete.getPlace();
                 const loc = place.geometry.location;
                 console.log('place', loc);
                 map.setCenter(place.geometry.location);
+                map.setZoom(8);
+
+                userLocation = new google.maps.LatLng(loc)
 
                 allMarkers.forEach(marker => marker.setMap(null)) // clear prev markers
 
@@ -237,15 +303,16 @@
                     return point.lat && point.lng
                 })
 
-                var center = [+place.geometry.location.lng(), +place.geometry.location.lat()];
-                var from = turf.point(center);
-                points.forEach(point => {
-                    var to = turf.point([+point.lng, +point.lat]);
-                    var options = { units: 'miles' };
-                    var distance = turf.distance(from, to, options);
-                    point.distance = distance
-                })
+                // var center = [+place.geometry.location.lng(), +place.geometry.location.lat()];
+                // var from = turf.point(center);
+                // points.forEach(point => {
+                //     var to = turf.point([+point.lng, +point.lat]);
+                //     var options = { units: 'miles' };
+                //     var distance = turf.distance(from, to, options);
+                //     point.distance = distance
+                // })
 
+                /*
                 const number = +document.querySelector('input[name="results"]:checked').value
                 console.log('number@@@@', number);
                 const closest = points.sort((a, b) => {
@@ -271,14 +338,14 @@
                     </div> 
                     ${infoContent.join("")}
                 `;
-
-                var bounds = new google.maps.LatLngBounds();
-                closest
-                    .map(pin => {
-                        addMarker(pin)
-                        bounds.extend({ lng: +pin.lng, lat: +pin.lat });
-                    })
-                map.fitBounds(bounds);
+                */
+                // var bounds = new google.maps.LatLngBounds();
+                // closest
+                //     .map(pin => {
+                //         addMarker(pin)
+                //         bounds.extend({ lng: +pin.lng, lat: +pin.lat });
+                //     })
+                //map.fitBounds(bounds);
             });
         }
     </script>
