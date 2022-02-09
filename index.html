@@ -10,12 +10,20 @@
     <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
 </head>
 <style>
+    @font-face {
+        font-family: "helvetica";
+        src: url("fonts/HelveticaNeue-CondensedRegular.woff") format('woff');
+        font-weight: bold;
+    }
+
+
     body,
     html {
         height: 100%;
         width: 100%;
         padding: 0px;
         margin: 0px;
+        font-family: helvetica;
     }
 
     #main-container {
@@ -101,11 +109,11 @@
             <div>
                 Search Radius
                 <select name="storelocator-search_radius" id="storelocator" class="inputs" aria-label="Search Radius">
-                    <option value="5">5 km</option>
-                    <option value="10">10 km</option>
-                    <option value="25">25 km</option>
-                    <option value="50">50 km</option>
-                    <option value="100">100 km</option>
+                    <option value="5">5 mi</option>
+                    <option value="10">10 mi</option>
+                    <option value="25">25 mi</option>
+                    <option value="50">50 mi</option>
+                    <option value="100">100 mi</option>
                     <option value="Unlimited" selected="">Unlimited</option>
                 </select>
             </div>
@@ -261,7 +269,7 @@
 
                 allMarkers.forEach(marker => {
 
-                    const distance = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), userLocation) / 1000;
+                    const distance = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), userLocation) / 1609;
                     if (radius >= +distance) {
                         marker.setVisible(true)
                         markerCluster.addMarker(marker)
